@@ -43,9 +43,6 @@ function magnetToTorrent(magnetURI, outputFilePath) {
 }
 
 
-// Example usage
-const outputFilePath = "output.torrent";
-magnetToTorrent(magnet, outputFilePath);
 
 const Download = () => {
   client.add(magnetURI[0].magnet, (torrent) => {
