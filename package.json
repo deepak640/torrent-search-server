@@ -1,0 +1,25 @@
+{
+  "name": "torrent-search-server",
+  "version": "1.0.0",
+  "description": "",
+  "type": "module",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@ctrl/magnet-link": "^4.0.2",
+    "axios": "^1.6.8",
+    "cheerio": "^1.0.0-rc.12",
+    "cli-progress": "^3.12.0",
+    "cors": "^2.8.5",
+    "express": "^4.19.2",
+    "magnet-uri": "^7.0.5",
+    "torrent-search-api": "^2.1.4",
+    "torrent2magnet-js": "^1.1.5",
+    "webtorrent": "^2.2.1"
+  }
+}
