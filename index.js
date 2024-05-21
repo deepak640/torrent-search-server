@@ -6,6 +6,9 @@ import fs from "fs";
 import cliProgress from "cli-progress";
 import { magnetDecode } from "@ctrl/magnet-link";
 import ParseTorrent from "parse-torrent";
+import path from "path";
+import crypto from "crypto";
+import bencode from "bencode";
 
 const app = express();
 const bar = new cliProgress.SingleBar({}, cliProgress.Presets.shades_classic);
@@ -15,16 +18,20 @@ TorrentSearchApi.enablePublicProviders();
 
 const client = new WebTorrent();
 
-const torrents = await TorrentSearchApi.search("spiderman");
-const magnetURI = torrents.filter((torrent) => torrent.magnet);
-const magnet = await TorrentSearchApi.getMagnet(magnetURI[0]);
+// get torrent magnet link
+const gettorrent = async (query) => {
+  const torrents = await TorrentSearchApi.search(query);
+  const magnetURI = torrents.filter((torrent) => torrent.magnet);
+  const magnet = await TorrentSearchApi.getMagnet(magnetURI[0]);
+  console.log("🚀 ~ gettorrent ~ magnet:", magnet);
 
-const torrentHtmlDetail = await TorrentSearchApi.getTorrentDetails(
-  magnetURI[0]
-);
+  const torrentHtmlDetail = await TorrentSearchApi.getTorrentDetails(
+    magnetURI[0]
+  );
+  console.log("🚀 ~ gettorrent ~ torrentHtmlDetail:", torrentHtmlDetail);
+  return magnet;
+};
 
-
-// Function to convert magnet link to torrent file
 function magnetToTorrent(magnetURI, outputFilePath) {
   const client = new WebTorrent();
 
@@ -37,15 +44,13 @@ function magnetToTorrent(magnetURI, outputFilePath) {
     client.destroy(); // Destroy the client after the process is done
   });
 
-  client.on('error', (err) => {
+  client.on("error", (err) => {
     console.error(`Error: ${err.message}`);
   });
 }
 
-
-
-const Download = () => {
-  client.add(magnetURI[0].magnet, (torrent) => {
+const Download = (torrent) => {
+  client.add(torrent, (torrent) => {
     const files = torrent.files;
     let length = files.length;
     console.log("Number of files :- \t", +length);
@@ -70,9 +75,60 @@ const Download = () => {
     });
   });
 };
+// const uri = await gettorrent("spiderman");
+// Download(uri)
+// magnetToTorrent(uri, "output.torrent");
 
-// const parsed = magnetDecode(magnetURI[0].magnet);
-// console.log(parsed.dn); // "Leaves of Grass by Walt Whitman.epub"
-// console.log(parsed.infoHash); // "d2474e86c95b19b8bcfdb92bc12c9d44667cfa36"
+function createTorrent(filePath) {
+  const pieceLength = 16384; // Piece length of 16 KB
+  const fileBuffer = fs.readFileSync(filePath);
+  const totalLength = fileBuffer.length;
+  const name = path.basename(filePath);
 
+  // Calculate the SHA-1 hash for each piece
+  const pieces = [];
+  for (let i = 0; i < totalLength; i += pieceLength) {
+    const end = Math.min(i + pieceLength, totalLength);
+    const piece = fileBuffer.slice(i, end);
+    const pieceHash = crypto.createHash("sha1").update(piece).digest();
+    pieces.push(pieceHash);
+  }
 
+  const torrent = {
+    info: {
+      name: name,
+      "piece length": pieceLength,
+      pieces: Buffer.concat(pieces),
+      length: totalLength,
+    },
+  };
+
+  return torrent;
+}
+
+function torrentToMagnet(torrent) {
+  const infoHash = crypto
+    .createHash("sha1")
+    .update(bencode.encode(torrent.info))
+    .digest("hex");
+  const magnetURI = `magnet:?xt=urn:btih:${infoHash}&dn=${encodeURIComponent(
+    torrent.info.name
+  )}`;
+  return magnetURI;
+}
+
+app.get('/', async (req, res) => {  
+  const torrents = await TorrentSearchApi.search("spiderman");
+  console.log("working")
+  const magnetURI = torrents.filter((torrent) => torrent.magnet);
+  res.send(magnetURI);
+
+});
+
+app.listen(PORT, (err) => {
+  if (err) {
+    console.log(err);
+  }else{
+    console.log("listening")
+  }
+});

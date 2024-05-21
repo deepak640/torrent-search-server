@@ -13,9 +13,11 @@
   "dependencies": {
     "@ctrl/magnet-link": "^4.0.2",
     "axios": "^1.6.8",
+    "bencode": "^4.0.0",
     "cheerio": "^1.0.0-rc.12",
     "cli-progress": "^3.12.0",
     "cors": "^2.8.5",
+    "crypto": "^1.0.1",
     "express": "^4.19.2",
     "magnet-uri": "^7.0.5",
     "parse-torrent": "^11.0.16",
