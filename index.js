@@ -117,11 +117,11 @@ function torrentToMagnet(torrent) {
   return magnetURI;
 }
 
-app.get('/', async (req, res) => {  
+app.get('/', async (req, res) => {
   const torrents = await TorrentSearchApi.search("spiderman");
   console.log("working")
   const magnetURI = torrents.filter((torrent) => torrent.magnet);
-  res.send(magnetURI);
+  res.json(magnetURI);
 
 });
 
