@@ -4,16 +4,20 @@ import TorrentSearchApi from "torrent-search-api";
 import WebTorrent from "webtorrent";
 import fs from "fs";
 import cliProgress from "cli-progress";
-import { magnetDecode } from "@ctrl/magnet-link";
-import ParseTorrent from "parse-torrent";
 import path from "path";
 import crypto from "crypto";
 import bencode from "bencode";
-
+import bodyParser from "body-parser";
 const app = express();
 const bar = new cliProgress.SingleBar({}, cliProgress.Presets.shades_classic);
 const PORT = process.env.PORT || 3000;
 app.use(cors());
+import { fileURLToPath } from "url";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+// app.use(bodyParser.urlencoded({ extended: false }));
+app.use(bodyParser.json());
 TorrentSearchApi.enablePublicProviders();
 
 const client = new WebTorrent();
@@ -117,18 +121,59 @@ function torrentToMagnet(torrent) {
   return magnetURI;
 }
 
-app.get('/', async (req, res) => {
+app.get("/", async (req, res) => {
   const torrents = await TorrentSearchApi.search("spiderman");
-  console.log("working")
+  console.log("working");
   const magnetURI = torrents.filter((torrent) => torrent.magnet);
   res.json(magnetURI);
+});
+
+app.post("/convert-magnet", async (req, res) => {
+  const magnetURI = req.body.magnet;
+  const outputFilePath = "output.torrent"
+  if (!magnetURI) {
+    return res.status(400).send("Magnet URI is required");
+  }
+  const client = new WebTorrent();
+
+  client.add(magnetURI, { announce: [] }, (torrent) => {
+    const torrentFileBuffer = torrent.torrentFile;
+
+    fs.writeFileSync(outputFilePath, torrentFileBuffer);
+    console.log(`Torrent file created at ${outputFilePath}`);
+    res.send("done");
+    client.destroy(); // Destroy the client after the process is done
+  });
+
+  client.on("error", (err) => {
+    console.error(`Error: ${err.message}`);
+  });
+});
+
+app.get("/download", (req, res) => {
+  const filePath = path.join(__dirname, "output.torrent"); // Path to your text file
+
+  res.download(filePath, "output.torrent", (err) => {
+    if (err) {
+      console.error("Error sending file:", err);
+      res.status(500).send("Error sending file");
+    }else{
+      // fs.rm(filePath, (err) => {
+      //   if (err) {
+      //     console.log(err);
+      //   } else {
+      //     console.log("removed");
+      //   }
+      // });
+    }
+  });
 
 });
 
 app.listen(PORT, (err) => {
   if (err) {
     console.log(err);
-  }else{
-    console.log("listening")
+  } else {
+    console.log("listening");
   }
 });

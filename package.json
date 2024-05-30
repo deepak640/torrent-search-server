@@ -14,6 +14,7 @@
     "@ctrl/magnet-link": "^4.0.2",
     "axios": "^1.6.8",
     "bencode": "^4.0.0",
+    "body-parser": "^1.20.2",
     "cheerio": "^1.0.0-rc.12",
     "cli-progress": "^3.12.0",
     "cors": "^2.8.5",
@@ -21,8 +22,10 @@
     "express": "^4.19.2",
     "magnet-uri": "^7.0.5",
     "parse-torrent": "^11.0.16",
+    "path": "^0.12.7",
     "torrent-search-api": "^2.1.4",
     "torrent2magnet-js": "^1.1.5",
+    "url": "^0.11.3",
     "webtorrent": "^2.2.1"
   }
 }
